@@ -88,24 +88,26 @@ test-package : TBD
 test-release : ver.mak
 	rsync -zP pkg/* $(ProdRelServer):$(ProdDevDir)/$(ProdOS)
 
-package : ver.mak
+package : ver.mak ver.env
 	-rm -rf pkg ver.epm >/dev/null 2>&1
 	mkdir pkg
 	export RELEASE=1; mkver.pl -d ver.sh -e epm
-	cd epm; ./epm -v -f native -m $(ProdOS)-$(ProdArch) --output-dir ../pkg epm ../ver.epm
+	. ./ver.env; cd epm; ./epm -v -f native -m $(ProdOS)-$(ProdArch) --output-dir ../pkg epm ../ver.epm
 
 release : ver.env ver.mak
-	+. ./ver.env; echo "ssh $$ProdRelServer mkdir -p $$ProdRelDir"
-	-. ./ver.env; ssh $$ProdRelServer mkdir -p $$ProdRelDir
-	. ./ver.env; ssh $$ProdRelServer test -d $$ProdRelDir
-	. ./ver.env; rsync -zP pkg/$${ProdName}-* $$ProdRelServer:$$ProdRelDir
+	+. ./ver.env; echo "ssh $(ProdRelServer) mkdir -p $(ProdRelDir)"
+	-. ./ver.env; ssh $(ProdRelServer) mkdir -p $(ProdRelDir)
+	. ./ver.env; ssh $(ProdRelServer) test -d $(ProdRelDir)
+	. ./ver.env; rsync -zP pkg/$(ProdName)-* $(ProdRelServer):$(ProdRelDir)
 	make tag
 
 tag : ver.env ver.mak
 	git commit -am Updated
-	. ./ver.env; git tag -f -a -m "Released to: $$ProdRelServer:$$ProdRelDir" $(ProdTag)-$(ProdBuild)
+	. ./ver.env; git tag -f -a -m "Released to: $(ProdRelServer):$(ProdRelDir)" $(ProdTag)-$(ProdBuild)
 	date -u +'%F %R UTC' >>VERSION
-	. ./ver.env; echo $(ProdTag)-$(ProdBuild) >>VERSION
+	. ./ver.env; echo "$(ProdTag)-$(ProdBuild)" >>VERSION
+	. ./ver.env; echo "Released: $$(ls pkg)" >>VERSION
+	. ./ver.env; echo "to: $(ProdRelServer):$(ProdRelDir)" >>VERSION
 
 prepare : ver.mak tmp tmp/epm-v$(mVer).tgz
 	-rm -rf epm
