@@ -104,7 +104,7 @@ release : ver.env ver.mak
 tag : ver.env ver.mak
 	git commit -am Updated
 	. ./ver.env; git tag $(ProdTag)-$(ProdBuild)
-	date >>VERSION
+	date -u +'%F %R UTC' >>VERSION
 	. ./ver.env; echo $(ProdTag)-$(ProdBuild) >>VERSION
 
 prepare : ver.mak tmp tmp/epm-v$(mVer).tgz
