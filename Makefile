@@ -104,10 +104,14 @@ release : ver.env ver.mak
 tag : ver.env ver.mak
 	-git commit -am Updated
 	. ./ver.env; git tag -f -a -m "Released to: $(ProdRelServer):$(ProdRelDir)" $(ProdTag)-$(ProdBuild)
+	echo "# --------------------" >>VERSION
 	date -u +'%F %R UTC' >>VERSION
 	. ./ver.env; echo "$(ProdTag)-$(ProdBuild)" >>VERSION
 	. ./ver.env; echo "Released: $$(ls pkg)" >>VERSION
 	. ./ver.env; echo "to: $(ProdRelServer):$(ProdRelDir)" >>VERSION
+	#git commit -am Updated
+	#git push origin develop
+	#git push --tags -f
 
 prepare : ver.mak tmp tmp/epm-v$(mVer).tgz
 	-rm -rf epm
