@@ -103,7 +103,7 @@ release : ver.env ver.mak
 
 tag : ver.env ver.mak
 	git commit -am Updated
-	. ./ver.env; git tag $(ProdTag)-$(ProdBuild)
+	. ./ver.env; git tag -f -a -m "Released to: $$ProdRelServer:$$ProdRelDir" $(ProdTag)-$(ProdBuild)
 	date -u +'%F %R UTC' >>VERSION
 	. ./ver.env; echo $(ProdTag)-$(ProdBuild) >>VERSION
 
