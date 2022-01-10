@@ -45,8 +45,9 @@ export MkVer="2.2"
 
 export ProdRelServer="moria.whyayh.com"
 export ProdRelRoot="/rel"
-export ProdRelCategory="software/ThirdParty/$ProdName"
-# Generated: ProdRelDir=ProdRelRoot . /released|development/ . ProdRelCategory
+export ProdRelCategory="software/ThirdParty/$ProdName/$ProdOS"
+# Generated: ProdRelDir=$ProdRelRoot/released/$ProdRelCategory
+# Generated: ProdDevDir=$ProdRelRoot/development/$ProdRelCategory
 
 # Generated: ProdTag=ProdVer-ProdBuild
 # "." converted to "-"

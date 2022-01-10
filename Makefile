@@ -94,15 +94,18 @@ package : ver.mak
 	export RELEASE=1; mkver.pl -d ver.sh -e epm
 	cd epm; ./epm -v -f native -m $(ProdOS)-$(ProdArch) --output-dir ../pkg epm ../ver.epm
 
-release : ver.mak tag
-	-ssh $(ProdRelServer) mkdir $(ProdRelDir)/$(ProdOS)
-	rsync -zP pkg/* $(ProdRelServer):$(ProdRelDir)/$(ProdOS)
+release : ver.env ver.mak
+	+. ./ver.env; echo "ssh $$ProdRelServer mkdir -p $$ProdRelDir"
+	-. ./ver.env; ssh $$ProdRelServer mkdir -p $$ProdRelDir
+	. ./ver.env; ssh $$ProdRelServer test -d $$ProdRelDir
+	. ./ver.env; rsync -zP pkg/$${ProdName}-* $$ProdRelServer:$$ProdRelDir
+	make tag
 
-tag : ver.mak
-	cvs commit -m Updated
-	cvs tag -cRF $(ProdTag)
+tag : ver.env ver.mak
+	git commit -am Updated
+	. ./ver.env; git tag $(ProdTag)-$(ProdBuild)
 	date >>VERSION
-	echo $(ProdTag) >>VERSION
+	. ./ver.env; echo $(ProdTag)-$(ProdBuild) >>VERSION
 
 prepare : ver.mak tmp tmp/epm-v$(mVer).tgz
 	-rm -rf epm
