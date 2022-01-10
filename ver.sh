@@ -7,10 +7,10 @@
 export ProdName="epm"
 # One word [-_.a-zA-Z0-9]
 
-export ProdVer="5.0.2"
+export ProdVer="5.0.1"
 # [0-9]*.[0-9]*{.[0-9]*}{.[0-9]*}
 
-export ProdBuild="3"
+export ProdBuild="4"
 # [0-9]*
 
 export ProdSummary="ESP Package Manager"

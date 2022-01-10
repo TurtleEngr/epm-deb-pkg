@@ -1,21 +1,28 @@
-# Makefile - build epm
+# Makefile - build epm-deb-pkg
 
-# Build Dependencies
+# Run this first to check for dependencies and to setup meta-date for packaging
+# make first
+
+# If missing packages, then as root run this:
 #	make deps
-# Get source
-#	make prepare
-#		or
+
+# Get the source from github (build target will use this if epm/ not found)
 #	make prepare-from-git
+# Or get the source from a tar file (call manually before build target)
+#	make prepare
 
 # Build/package
 #	make build
+#	make test-package
+# 	make test-release
 #	make package
-# 	make release-dev
 # 	make release
 # 	make package-src
 
+# --------------------
 include ver.mak
 
+# --------------------
 # Source version
 mVer=5.0.0
 mNewVer=5.0.2
@@ -29,6 +36,7 @@ mArchiveMethod = $(mRemoteArchive)
 mGitHub = git clone git@github.com:jimjag/epm.git
 
 mDepPkgList = \
+	epm-helper \
 	libfltk1.3-dev \
 	libpng-dev \
 	libjpeg-dev \
@@ -36,28 +44,55 @@ mDepPkgList = \
 	libxcursor-dev \
 	libxfixes-dev \
 	libxext-dev \
-	libxft2-dev \
+	libxft-dev \
+	libxft2 \
 	libxinerama-dev
 
 mDirs = pkg tmp
 
 # --------------------
-.PHONY : build package releas-dev release tag prepare prepare-from-git \
-         clean dist-clean package-src
 
-build : ver.env
-	# Note: firs check diff with custom/
+.PHONY : first build package release test-package test-release tag \
+         prepare prepare-from-git clean dist-clean package-src
+
+first : ver.mak ver.epm
+	@which mkver.pl
+	@which patch-epm-list
+	@which perl
+	@tErr=0; for pkg in $(mDepPkgList); do \
+	    dpkg -l | grep -q $$pkg; \
+	    if [ $$? -ne 0 ]; then \
+	        echo "Missing package: $$pkg"; \
+	        tErr=1; \
+	    fi; \
+	done; \
+	if [ $$tErr -ne 0 ]; then exit 1; fi
+
+get-deps :
+	if [ "$$(whoami)" != "root" ]; then exit 1; fi
+	apt-get install $(mDepPkgList)
+
+build : ver.env epm/config.h
+	# Note: first check diff with custom/
 	rsync -CPr custom/* epm
-	sed -i 's/v$(mVer)/v$(ProdVer)/' epm/config.h
+	. ./ver.env; sed -i 's/v$(mVer)/v$(ProdVer)/' epm/config.h
 	cd epm; make
 	egrep -v '%product|%subpackage|%copyright|%vendor|%license|%readme|%description|%version|%packager|GUIS=|README|COPYING|LICENSE' epm/epm.list >epm.list
 
-package : ver.epm ver.mak pkg
-	-rm -f pkg/* 2>/dev/null
+test-package : TBD
+	-rm -f pkg ver.epm >/dev/null 2>&1
+	mkdir pkg
+	export RELEASE=0; mkver.pl -d ver.sh -e epm
 	cd epm; ./epm -v -f native -m $(ProdOS)-$(ProdArch) --output-dir ../pkg epm ../ver.epm
 
-release-dev : ver.mak
+test-release : ver.mak
 	rsync -zP pkg/* $(ProdRelServer):$(ProdDevDir)/$(ProdOS)
+
+package : ver.mak
+	-rm -rf pkg ver.epm >/dev/null 2>&1
+	mkdir pkg
+	export RELEASE=1; mkver.pl -d ver.sh -e epm
+	cd epm; ./epm -v -f native -m $(ProdOS)-$(ProdArch) --output-dir ../pkg epm ../ver.epm
 
 release : ver.mak tag
 	-ssh $(ProdRelServer) mkdir $(ProdRelDir)/$(ProdOS)
@@ -69,16 +104,12 @@ tag : ver.mak
 	date >>VERSION
 	echo $(ProdTag) >>VERSION
 
-deps : /usr/local/bin/mkver.pl ver.mak
-	if [ "$$(whoami)" != "root" ]; then exit 1; fi
-	apt-get install $(mDepPkgList)
-
 prepare : ver.mak tmp tmp/epm-v$(mVer).tgz
 	-rm -rf epm
 	tar -xzf tmp/epm-v$(mVer).tgz
 	-cd epm; ./configure --quiet --prefix=/usr/local
 
-prepare-from-git : ver.mak ~/ver/github/epm
+prepare-from-git epm/config.h : ver.mak ~/ver/github/epm
 	cd ~/ver/github/epm; git co trunk
 	cd ~/ver/github/epm; git pull origin trunk
 	cd ~/ver/github/epm; git fetch --all --tags
@@ -91,7 +122,7 @@ prepare-from-git : ver.mak ~/ver/github/epm
 clean :
 	-find * -name '*~' -exec rm {} \;
 	-rm ver.epm ver.env epm.list
-	-cd epm; make clean; make distclean
+	#-cd epm; make clean; make distclean
 
 dist-clean : clean
 	-rm ver.mak
@@ -107,7 +138,7 @@ package-src : distclean ver.env
 # Working targets
 
 ver.mak ver.env ver.epm : ver.sh /usr/local/bin/mkver.pl
-	export RELEASE=0; mkver.pl -d ver.sh -e 'mak env epm'
+	mkver.pl -d ver.sh -e 'mak env epm'
 
 $(mDirs) :
 	mkdir -p $@
@@ -122,4 +153,4 @@ tmp/epm-v$(mVer).tgz :
 	cd ~/ver/github/epm; git fetch --all --tags
 
 #/usr/local/bin/mkver.pl /usr/local/bin/patch-epm-list :
-#	apt-get install epm-helpers.deb
+#	apt-get install epm-helper.deb
