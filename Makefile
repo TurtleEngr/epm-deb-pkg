@@ -4,7 +4,7 @@
 # make first
 
 # If missing packages, then as root run this:
-#	make deps
+#	make get-deps
 
 # Get the source from github (build target will use this if epm/ not found)
 #	make prepare-from-git
