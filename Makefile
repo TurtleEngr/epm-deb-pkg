@@ -1,7 +1,7 @@
 # Makefile - build epm-deb-pkg
 
 # Run this first to check for dependencies and to setup meta-date for packaging
-# make first
+# 	make first
 
 # If missing packages, then as root run this:
 #	make get-deps
